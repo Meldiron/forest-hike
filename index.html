@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en" style="background-color: #222529">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://www.unpkg.com/odyc@0.0.102/dist/index.global.js"></script>
+    <script src="/main.js"></script>
+    <title>Forest Hike | Memory minigame</title>
+
+    
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+  </head>
+  <body>
+    <script>
+      // TODO: Add sounds
+      // TODO: Add route generation from hash (take tash from url, or auto-generate and append to url)
+      // TODO: Increase canvas size
+      // TODO: add online with Appwrite
+
+      let currentLevel = 0;
+      const levels = [
+        `
+        rrr.....
+        ..rrs...
+        ....r...
+        ...rr...
+        ..rr....
+        ..r.....
+        ..f.....
+        ........
+        `,
+        `
+        rrrsrrr.
+        ......r.
+        ..fr..r.
+        ...r..rr
+        ...rr..c
+        ....r..r
+        ....rrrr
+        .........
+        `,
+        `
+        r..rrrr.
+        rr.r..rc
+        .s.rr..r
+        rr..r..r
+        r...r..r
+        rr.rc.rr
+        .r.r..r.
+        .rrr..rf
+        `,
+      ];
+
+      function setEmpty() {
+        game.loadMap(`
+          ........
+          ........
+          ........
+          ........
+          ........
+          ........
+          ........
+          ........
+        `);
+        game.player.position = [-1, -1];
+      }
+
+      function setDark() {
+        game.loadMap(
+          levels[currentLevel]
+            .split("r")
+            .join("R")
+            .split("s")
+            .join("S")
+            .split("f")
+            .join("F")
+            .split("c")
+            .join("C")
+            .split(".")
+            .join("-"),
+        );
+      }
+
+      function setLight() {
+        game.loadMap(levels[currentLevel]);
+      }
+
+      function getObsticleSprite(visible) {
+        return {
+          onEnter: async () => {
+            setLight();
+            await game.openDialog(
+              "You missed a turn and got lost in the woods!",
+            );
+            game.player.position = [0, 0];
+          },
+          solid: false,
+          sprite: visible
+            ? gameConfig.sprites.obsticle
+            : gameConfig.sprites["road-dark"],
+        };
+      }
+
+      function getRoadSprite(visible) {
+        return {
+          sound: ['LASER', 12345],
+          solid: false,
+          sprite: visible
+            ? gameConfig.sprites.road
+            : gameConfig.sprites["road-dark"],
+        };
+      }
+
+      function getCheckpointSprite(visible, step) {
+        return {
+          solid: false,
+          onEnter: async (target) => {
+            setLight();
+
+            const isFinish = step == 3;
+            if (isFinish) {
+              currentLevel++;
+              if (!levels[currentLevel]) {
+                currentLevel--;
+                game.end(
+                  "You finished entire Forest Hike!\n\n\nThanks for playing.",
+                );
+                game.player.position = [-100, -100];
+                setEmpty();
+                return;
+              } else {
+                game.end(
+                  "You finished a hike!\n\n\nNext level: " +
+                    (currentLevel + 1) +
+                    "\n\n\n<7>Press SPACE to continue.<7>",
+                );
+                game.player.position = [0, 0];
+                setLight();
+                return;
+              }
+            }
+
+            const msg =
+              step === 1
+                ? "It's getting dark. Remember the route!"
+                : "What a nap! Let's continue the hike.";
+            await game.openDialog(msg);
+            setDark();
+          },
+          sprite: visible
+            ? gameConfig.sprites.checkpoint
+            : gameConfig.sprites["road-dark"],
+        };
+      }
+
+      const game = odyc.createGame({
+        background: "",
+        title:
+          "<1>Forest Hike<1>\n<3>(memory minigame)<3>\n\n\nStay on the trail!\n\n\n<7>Press SPACE to start.<7>",
+        messageColor: "#fff",
+        messageBackground: "#222529",
+        dialogBackground: "#222529",
+        dialogColor: "#fff",
+        dialogBorder: "#fff",
+        dialogInternvalMs: 15,
+        controls: {
+          LEFT: ["KeyA", "ArrowLeft"],
+          RIGHT: ["KeyD", "ArrowRight"],
+          UP: ["KeyW", "ArrowUp"],
+          DOWN: ["KeyS", "ArrowDown"],
+          ACTION: ["Enter", "Space"],
+        },
+        cellWidth: gameConfig.cellWidth,
+        cellHeight: gameConfig.cellHeight,
+        colors: gameConfig.colors,
+        map: levels[currentLevel],
+        templates: {
+          ".": getObsticleSprite(true),
+          "-": getObsticleSprite(false),
+          r: getRoadSprite(true),
+          R: getRoadSprite(false),
+          s: getCheckpointSprite(true, 1),
+          S: getCheckpointSprite(false, 1),
+          c: getCheckpointSprite(true, 2),
+          C: getCheckpointSprite(false, 2),
+          f: getCheckpointSprite(true, 3),
+          F: getCheckpointSprite(false, 3),
+        },
+        player: {
+          position: [0, 0],
+          sprite: gameConfig.sprites.player,
+        },
+      });
+    </script>
+  </body>
+</html>
