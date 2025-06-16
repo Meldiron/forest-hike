@@ -187,14 +187,30 @@
         );
 
         const difficulty = await askDifficulty();
-
-        const size =
-          difficulty === "easy" ? 5 : difficulty === "medium" ? 7 : 10;
+        
+        const configurations = {
+          'easy': {
+            minLength: 12,
+            maxLength: 15,
+            checkpointGap: 5,
+          },
+          'medium': {
+            minLength: 25,
+            maxLength: 30,
+            checkpointGap: 7,
+          },
+          'hard': {
+            minLength: 50,
+            maxLength: 100,
+            checkpointGap: 10,
+          }
+        };
+        const configuration = configurations[difficulty];
 
         let level = null;
         let i = 0;
         while (level === null && i < 100000) {
-          level = generateRandomPath(10, 10, (size * size) / 2, size * 3, size);
+          level = generateRandomPath(10, 10, configuration.minLength, configuration.maxLength, configuration.checkpointGap);
           i++;
         }
 
