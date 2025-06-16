@@ -5,52 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://www.unpkg.com/odyc@0.0.102/dist/index.global.js"></script>
     <script src="/main.js"></script>
+    <script src="/map.js"></script>
     <title>Forest Hike | Memory minigame</title>
-
-    
-
     <link rel="icon" type="image/png" href="/favicon.png" />
   </head>
   <body>
     <script>
+      const size = 5;
+
       // TODO: Add sounds
       // TODO: Add route generation from hash (take tash from url, or auto-generate and append to url)
       // TODO: Increase canvas size
       // TODO: add online with Appwrite
 
       let currentLevel = 0;
-      const levels = [
-        `
-        rrr.....
-        ..rrs...
-        ....r...
-        ...rr...
-        ..rr....
-        ..r.....
-        ..f.....
-        ........
-        `,
-        `
-        rrrsrrr.
-        ......r.
-        ..fr..r.
-        ...r..rr
-        ...rr..c
-        ....r..r
-        ....rrrr
-        .........
-        `,
-        `
-        r..rrrr.
-        rr.r..rc
-        .s.rr..r
-        rr..r..r
-        r...r..r
-        rr.rc.rr
-        .r.r..r.
-        .rrr..rf
-        `,
-      ];
+      const levels = [];
+
+      let level = null;
+      let i = 0;
+      while (level === null && i < 100000) {
+        level = generateRandomPath(size, size, (size * size) / 2, size);
+        i++;
+      }
+      levels.push({
+        start: level.start,
+        end: level.end,
+        map: convertPathToMap(level.path, size),
+      });
 
       function setEmpty() {
         game.loadMap(`
@@ -63,12 +44,12 @@
           ........
           ........
         `);
-        game.player.position = [-1, -1];
+        game.player.position = [-100, -100];
       }
 
       function setDark() {
         game.loadMap(
-          levels[currentLevel]
+          levels[currentLevel].map
             .split("r")
             .join("R")
             .split("s")
@@ -83,7 +64,7 @@
       }
 
       function setLight() {
-        game.loadMap(levels[currentLevel]);
+        game.loadMap(levels[currentLevel].map);
       }
 
       function getObsticleSprite(visible) {
@@ -93,7 +74,10 @@
             await game.openDialog(
               "You missed a turn and got lost in the woods!",
             );
-            game.player.position = [0, 0];
+            game.player.position = [
+              levels[currentLevel].start.x,
+              levels[currentLevel].start.y,
+            ];
           },
           solid: false,
           sprite: visible
@@ -104,7 +88,6 @@
 
       function getRoadSprite(visible) {
         return {
-          sound: ['LASER', 12345],
           solid: false,
           sprite: visible
             ? gameConfig.sprites.road
@@ -126,7 +109,6 @@
                 game.end(
                   "You finished entire Forest Hike!\n\n\nThanks for playing.",
                 );
-                game.player.position = [-100, -100];
                 setEmpty();
                 return;
               } else {
@@ -135,7 +117,10 @@
                     (currentLevel + 1) +
                     "\n\n\n<7>Press SPACE to continue.<7>",
                 );
-                game.player.position = [0, 0];
+                game.player.position = [
+                  levels[currentLevel].start.x,
+                  levels[currentLevel].start.y,
+                ];
                 setLight();
                 return;
               }
@@ -155,6 +140,8 @@
       }
 
       const game = odyc.createGame({
+        screenWidth: size,
+        screenHeight: size,
         background: "",
         title:
           "<1>Forest Hike<1>\n<3>(memory minigame)<3>\n\n\nStay on the trail!\n\n\n<7>Press SPACE to start.<7>",
@@ -174,7 +161,7 @@
         cellWidth: gameConfig.cellWidth,
         cellHeight: gameConfig.cellHeight,
         colors: gameConfig.colors,
-        map: levels[currentLevel],
+        map: levels[currentLevel].map,
         templates: {
           ".": getObsticleSprite(true),
           "-": getObsticleSprite(false),
@@ -188,7 +175,10 @@
           F: getCheckpointSprite(false, 3),
         },
         player: {
-          position: [0, 0],
+          position: [
+            levels[currentLevel].start.x,
+            levels[currentLevel].start.y,
+          ],
           sprite: gameConfig.sprites.player,
         },
       });
