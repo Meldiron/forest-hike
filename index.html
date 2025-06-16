@@ -11,45 +11,11 @@
   </head>
   <body>
     <script>
-      const size = 5;
-
-      // TODO: Add sounds
-      // TODO: Add route generation from hash (take tash from url, or auto-generate and append to url)
-      // TODO: Increase canvas size
-      // TODO: add online with Appwrite
-
-      let currentLevel = 0;
-      const levels = [];
-
-      let level = null;
-      let i = 0;
-      while (level === null && i < 100000) {
-        level = generateRandomPath(size, size, (size * size) / 2, size);
-        i++;
-      }
-      levels.push({
-        start: level.start,
-        end: level.end,
-        map: convertPathToMap(level.path, size),
-      });
-
-      function setEmpty() {
-        game.loadMap(`
-          ........
-          ........
-          ........
-          ........
-          ........
-          ........
-          ........
-          ........
-        `);
-        game.player.position = [-100, -100];
-      }
+      let currentLevel;
 
       function setDark() {
         game.loadMap(
-          levels[currentLevel].map
+          currentLevel.map
             .split("r")
             .join("R")
             .split("s")
@@ -64,7 +30,7 @@
       }
 
       function setLight() {
-        game.loadMap(levels[currentLevel].map);
+        game.loadMap(currentLevel.map);
       }
 
       function getObsticleSprite(visible) {
@@ -74,10 +40,7 @@
             await game.openDialog(
               "You missed a turn and got lost in the woods!",
             );
-            game.player.position = [
-              levels[currentLevel].start.x,
-              levels[currentLevel].start.y,
-            ];
+            game.player.position = [currentLevel.start.x, currentLevel.start.y];
           },
           solid: false,
           sprite: visible
@@ -103,34 +66,31 @@
 
             const isFinish = step == 3;
             if (isFinish) {
-              currentLevel++;
-              if (!levels[currentLevel]) {
-                currentLevel--;
-                game.end(
-                  "You finished entire Forest Hike!\n\n\nThanks for playing.",
-                );
-                setEmpty();
-                return;
-              } else {
-                game.end(
-                  "You finished a hike!\n\n\nNext level: " +
-                    (currentLevel + 1) +
-                    "\n\n\n<7>Press SPACE to continue.<7>",
-                );
-                game.player.position = [
-                  levels[currentLevel].start.x,
-                  levels[currentLevel].start.y,
-                ];
-                setLight();
-                return;
-              }
+              let finishes = +(
+                localStorage.getItem(currentLevel.difficulty) || "0"
+              );
+              finishes++;
+              localStorage.setItem(currentLevel.difficulty, `${finishes}`);
+
+              await game.openMessage(
+                "<1>You finished one " +
+                  currentLevel.difficulty +
+                  " hike, good job!<1>\n\n\n<7>Press SPACE to go to main menu.<7>",
+              );
+              showTitleScreen();
+              return;
             }
 
-            const msg =
-              step === 1
-                ? "It's getting dark. Remember the route!"
-                : "What a nap! Let's continue the hike.";
-            await game.openDialog(msg);
+            const dialogs = localStorage.getItem("dialogs") || "yes";
+            if (dialogs === "yes") {
+              const msg =
+                step === 1
+                  ? "It's getting dark. Remember the route!"
+                  : "What a nap! Let's continue the hike.";
+              await game.openDialog(msg);
+            }
+          },
+          onLeave: () => {
             setDark();
           },
           sprite: visible
@@ -140,11 +100,11 @@
       }
 
       const game = odyc.createGame({
-        screenWidth: size,
-        screenHeight: size,
-        background: "",
-        title:
-          "<1>Forest Hike<1>\n<3>(memory minigame)<3>\n\n\nStay on the trail!\n\n\n<7>Press SPACE to start.<7>",
+        screenWidth: 10,
+        screenHeight: 10,
+        cameraWidth: 10,
+        cameraHeight: 10,
+        background: "#000",
         messageColor: "#fff",
         messageBackground: "#222529",
         dialogBackground: "#222529",
@@ -161,7 +121,7 @@
         cellWidth: gameConfig.cellWidth,
         cellHeight: gameConfig.cellHeight,
         colors: gameConfig.colors,
-        map: levels[currentLevel].map,
+        map: ``,
         templates: {
           ".": getObsticleSprite(true),
           "-": getObsticleSprite(false),
@@ -175,13 +135,80 @@
           F: getCheckpointSprite(false, 3),
         },
         player: {
-          position: [
-            levels[currentLevel].start.x,
-            levels[currentLevel].start.y,
-          ],
+          position: [0, 0],
           sprite: gameConfig.sprites.player,
         },
       });
+
+      function setEmpty() {
+        game.loadMap(`
+          ..........
+          ..........
+          ..........
+          ..........
+          ..........
+          ..........
+          ..........
+          ..........
+          ..........
+          ..........
+        `);
+        game.player.position = [-1, -1];
+      }
+
+      async function askDifficulty() {
+        const dialogs = localStorage.getItem("dialogs") || "yes";
+        const responseIndex = await game.prompt(
+          "Easy",
+          "Medium",
+          "Hard",
+          dialogs === "yes" ? "Hide dialogs" : "Show dialogs",
+        );
+        if (responseIndex === 3) {
+          if (dialogs === "yes") {
+            localStorage.setItem("dialogs", "no");
+          } else {
+            localStorage.setItem("dialogs", "yes");
+          }
+          return askDifficulty();
+        }
+
+        const difficulty = ["easy", "medium", "hard"][responseIndex];
+        return difficulty;
+      }
+
+      async function showTitleScreen() {
+        const easy = +(localStorage.getItem("easy") || "0");
+        const medium = +(localStorage.getItem("medium") || "0");
+        const hard = +(localStorage.getItem("hard") || "0");
+        setEmpty();
+        await game.openMessage(
+          `<1>Forest Hike<1>\n<3>(memory minigame)<3>\n\n\nStay on the trail!\n\nLevels completed:\nEasy: ${easy}\nMedium: ${medium}\nHard: ${hard}\n\n\n<7>Press SPACE to start.<7>`,
+        );
+
+        const difficulty = await askDifficulty();
+
+        const size =
+          difficulty === "easy" ? 5 : difficulty === "medium" ? 7 : 10;
+
+        let level = null;
+        let i = 0;
+        while (level === null && i < 100000) {
+          level = generateRandomPath(10, 10, (size * size) / 2, size * 3, size);
+          i++;
+        }
+
+        currentLevel = {
+          start: level.start,
+          end: level.end,
+          map: convertPathToMap(level.path, 10),
+          difficulty,
+        };
+        game.player.position = [currentLevel.start.x, currentLevel.start.y];
+        setLight();
+      }
+
+      showTitleScreen();
     </script>
   </body>
 </html>

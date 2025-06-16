@@ -1,4 +1,10 @@
-function generateRandomPath(width, height, minLength, checkpointGap) {
+function generateRandomPath(
+  width,
+  height,
+  minLength,
+  maxLength,
+  checkpointGap,
+) {
   const corners = [
     { x: 0, y: 0 }, // Top-left
     { x: width - 1, y: 0 }, // Top-right
@@ -23,8 +29,8 @@ function generateRandomPath(width, height, minLength, checkpointGap) {
   let currentX = start.x;
   let currentY = start.y;
 
-  const endX = end.x;
-  const endY = end.y;
+  let endX = end.x;
+  let endY = end.y;
 
   let gap = 0;
   let isStart = true;
@@ -86,7 +92,7 @@ function generateRandomPath(width, height, minLength, checkpointGap) {
 
     let isCheckpoint = false;
     if (isStart) {
-      if (gap >= 3) {
+      if (gap >= 2) {
         isCheckpoint = true;
       }
     } else {
@@ -95,7 +101,12 @@ function generateRandomPath(width, height, minLength, checkpointGap) {
       }
     }
 
-    const isEnd = currentX === end.x && currentY === end.y;
+    let isEnd = currentX === endX && currentY === endY;
+    if (path.length >= maxLength) {
+      isEnd = true;
+      endX = currentX;
+      endY = currentY;
+    }
     if (isEnd) {
       isCheckpoint = true;
     }
