@@ -1,255 +1,27 @@
 <!doctype html>
 <html lang="en" style="background-color: #222529">
   <head>
+    <title>Forest Hike | Memory minigame</title>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://www.unpkg.com/odyc@0.0.106/dist/index.global.js"></script>
-    <script src="/assets.js"></script>
-    <script src="/map.js"></script>
-    <title>Forest Hike | Memory minigame</title>
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <script>
-    const params = new URLSearchParams(document.location.search);
-    const urlDifficulty = params.get("difficulty");
-    const urlAutoStart = (params.get("autostart") || '') === 'yes';
-    
-    if(!urlDifficulty) {
-      window.location.href = '/?difficulty=easy';
-    } else if (urlAutoStart) {
-      history.replaceState(null, null, window.location.pathname + (urlDifficulty ? `?difficulty=${urlDifficulty}` : ''));
-    }
-    
-    const urlSize = urlDifficulty === 'easy' ? 5 : (urlDifficulty === 'medium' ? 7 : 10);
-    </script>
+
+    <script src="https://www.unpkg.com/odyc@0.0.112/dist/index.global.js"></script>
+
+    <script src="/utils/map-generator.js"></script>
+    <script src="/assets.js"></script>
+
+    <script src="/scenes/welcome.js"></script>
+    <script src="/scenes/menu.js"></script>
+    <script src="/scenes/settings.js"></script>
+    <script src="/scenes/stats.js"></script>
+    <script src="/scenes/difficulty.js"></script>
+    <script src="/scenes/game.js"></script>
   </head>
   <body>
     <script>
-      let currentLevel;
-
-      function setDark() {
-        game.loadMap(
-          currentLevel.map
-            .split("r")
-            .join("R")
-            .split("s")
-            .join("S")
-            .split("f")
-            .join("F")
-            .split("c")
-            .join("C")
-            .split(".")
-            .join("-"),
-        );
-      }
-
-      function setLight() {
-        game.loadMap(currentLevel.map);
-      }
-
-      function getObsticleSprite(visible) {
-        return {
-          onEnter: async () => {
-            setLight();
-            await game.openDialog(
-              "You missed a turn and got lost in the woods!",
-            );
-            game.player.position = [currentLevel.start.x, currentLevel.start.y];
-          },
-          solid: false,
-          sprite: visible
-            ? gameConfig.sprites.obsticle
-            : gameConfig.sprites["road-dark"],
-        };
-      }
-
-      function getRoadSprite(visible) {
-        return {
-          solid: false,
-          sprite: visible
-            ? gameConfig.sprites.road
-            : gameConfig.sprites["road-dark"],
-        };
-      }
-
-      function getCheckpointSprite(visible, step) {
-        return {
-          solid: false,
-          onEnter: async (target) => {
-            setLight();
-
-            const isFinish = step == 3;
-            if (isFinish) {
-              let finishes = +(
-                localStorage.getItem(currentLevel.difficulty) || "0"
-              );
-              finishes++;
-              localStorage.setItem(currentLevel.difficulty, `${finishes}`);
-
-              await game.openMessage(
-                "<1>You finished one " +
-                  currentLevel.difficulty +
-                  " hike, good job!<1>\n\n\n<7>Press SPACE to go to main menu.<7>",
-              );
-              showTitleScreen();
-              return;
-            }
-
-            const dialogs = localStorage.getItem("dialogs") || "yes";
-            if (dialogs === "yes") {
-              const msg =
-                step === 1
-                  ? "It's getting dark. Remember the route!"
-                  : "What a nap! Let's continue the hike.";
-              await game.openDialog(msg);
-            }
-          },
-          onLeave: () => {
-            setDark();
-          },
-          sprite: visible
-            ? gameConfig.sprites.checkpoint
-            : gameConfig.sprites["road-dark"],
-        };
-      }
-
-      const game = odyc.createGame({
-        screenWidth: urlSize,
-        screenHeight: urlSize,
-        cameraWidth: urlSize,
-        cameraHeight: urlSize,
-        background: "#000",
-        messageColor: "#fff",
-        messageBackground: "#222529",
-        dialogBackground: "#222529",
-        dialogColor: "#fff",
-        dialogBorder: "#fff",
-        dialogInternvalMs: 15,
-        controls: {
-          LEFT: ["KeyA", "ArrowLeft"],
-          RIGHT: ["KeyD", "ArrowRight"],
-          UP: ["KeyW", "ArrowUp"],
-          DOWN: ["KeyS", "ArrowDown"],
-          ACTION: ["Enter", "Space"],
-        },
-        cellWidth: gameConfig.cellWidth,
-        cellHeight: gameConfig.cellHeight,
-        colors: gameConfig.colors,
-        map: ``,
-        templates: {
-          ".": getObsticleSprite(true),
-          "-": getObsticleSprite(false),
-          r: getRoadSprite(true),
-          R: getRoadSprite(false),
-          s: getCheckpointSprite(true, 1),
-          S: getCheckpointSprite(false, 1),
-          c: getCheckpointSprite(true, 2),
-          C: getCheckpointSprite(false, 2),
-          f: getCheckpointSprite(true, 3),
-          F: getCheckpointSprite(false, 3),
-        },
-        player: {
-          position: [0, 0],
-          sprite: gameConfig.sprites.player,
-        },
-      });
-
-      function setEmpty() {
-        game.loadMap(`
-          ..........
-          ..........
-          ..........
-          ..........
-          ..........
-          ..........
-          ..........
-          ..........
-          ..........
-          ..........
-        `);
-        game.player.position = [-1, -1];
-      }
-
-      async function askDifficulty() {
-        const dialogs = localStorage.getItem("dialogs") || "yes";
-        const responseIndex = await game.prompt(
-          "Easy",
-          "Medium",
-          "Hard",
-          dialogs === "yes" ? "Hide dialogs" : "Show dialogs",
-        );
-        
-        if (responseIndex === 3) {
-          if (dialogs === "yes") {
-            localStorage.setItem("dialogs", "no");
-          } else {
-            localStorage.setItem("dialogs", "yes");
-          }
-          return askDifficulty();
-        }
-
-        const difficulty = ["easy", "medium", "hard"][responseIndex];
-        
-        if(urlDifficulty !== difficulty) {
-          window.location.href = '/?difficulty=' + difficulty + "&autostart=yes";
-          return askDifficulty();
-        }
-        
-        return difficulty;
-      }
-
-      async function showTitleScreen(difficulty = null) {
-        if(!difficulty) {
-          const easy = +(localStorage.getItem("easy") || "0");
-          const medium = +(localStorage.getItem("medium") || "0");
-          const hard = +(localStorage.getItem("hard") || "0");
-          setEmpty();
-          await game.openMessage(
-            `<1>Forest Hike<1>\n<3>(memory minigame)<3>\n\n\nStay on the trail!\n\nLevels completed:\nEasy: ${easy}\nMedium: ${medium}\nHard: ${hard}\n\n\n<7>Press SPACE to start.<7>`,
-          );
-  
-          difficulty = await askDifficulty();
-        }
-        
-        const configurations = {
-          'easy': {
-            minLength: 12,
-            maxLength: 15,
-            checkpointGap: 5,
-            size: 5,
-          },
-          'medium': {
-            minLength: 25,
-            maxLength: 30,
-            checkpointGap: 7,
-            size: 7,
-          },
-          'hard': {
-            minLength: 50,
-            maxLength: 100,
-            checkpointGap: 10,
-            size: 10
-          }
-        };
-        const configuration = configurations[difficulty];
-
-        let level = null;
-        let i = 0;
-        while (level === null && i < 100000) {
-          level = generateRandomPath(configuration.size, configuration.size, configuration.minLength, configuration.maxLength, configuration.checkpointGap);
-          i++;
-        }
-
-        currentLevel = {
-          start: level.start,
-          end: level.end,
-          map: convertPathToMap(level.path, configuration.size),
-          difficulty,
-        };
-        game.player.position = [currentLevel.start.x, currentLevel.start.y];
-        setLight();
-      }
-
-      showTitleScreen(urlAutoStart ? urlDifficulty : null);
+      openWelcomeScene();
     </script>
   </body>
 </html>
