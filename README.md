@@ -25,85 +25,16 @@ Forest Hike is a brain training game designed to improve your memory and spatial
 The game offers three difficulty settings to challenge players of all skill levels:
 
 ### Easy 🟢
-- **Path Length**: 12-15 segments
-- **Checkpoint Gap**: Every 5 segments
-- **Map Size**: 5x5 grid
+
+Great for first-time players, and playful kids.
 
 ### Medium 🟡
-- **Path Length**: 25-30 segments  
-- **Checkpoint Gap**: Every 7 segments
-- **Map Size**: 7x7 grid
+
+Great for experienced players, and kids who want a challenge.
 
 ### Hard 🔴
-- **Path Length**: 50-100 segments
-- **Checkpoint Gap**: Every 7+ segments
-- **Map Size**: Larger grid for maximum challenge
 
-## 🛠️ Technical Details
-
-### Built With
-- **[Odyc.js](https://www.npmjs.com/package/odyc)** - Lightweight JavaScript game engine
-- **Odyc CLI** - Asset management and sprite generation
-- **Vanilla JavaScript** - Core game logic and scene management
-
-### Project Structure
-```
-forest-hike/
-├── assets/           # Game sprites and assets
-├── scenes/           # Game scenes (menu, game, difficulty, etc.)
-├── screenshots/      # Game screenshots for documentation
-├── utils/           # Utility functions (map generation, etc.)
-├── assets.js        # Generated sprite assets
-├── assets.sh        # Asset build script
-└── index.html       # Main game file
-```
-
-### Asset Management
-The game uses Odyc CLI for sprite management:
-```bash
-# Install Odyc CLI
-go install github.com/meldiron/odyc-cli@latest
-
-# Generate assets
-odyc-cli sprites -a ./assets -o assets.js
-```
-
-## 🖼️ Screenshots
-
-| Menu | Difficulty Selection |
-|------|---------------------|
-| ![Menu](screenshots/menu.png) | ![Difficulty](screenshots/difficulty.png) |
-
-| Daylight Map | Night Navigation |
-|--------------|------------------|
-| ![Day Map](screenshots/map-day.png) | ![Night Map](screenshots/map-night.png) |
-
-| Mid-game Checkpoint | Statistics |
-|--------------------|------------|
-| ![Checkpoint](screenshots/map-midgame.png) | ![Stats](screenshots/stats.png) |
-
-## 🚀 Getting Started
-
-### Playing Online
-Simply visit [https://forest-hike.appwrite.network/](https://forest-hike.appwrite.network/) to play immediately in your browser.
-
-### Local Development
-1. Clone the repository
-2. Open `index.html` in your browser
-3. Or serve with a local HTTP server:
-   ```bash
-   # Python
-   python -m http.server 8000
-   
-   # Node.js
-   npx serve .
-   ```
-
-### Building Assets
-If you modify sprites in the `assets/` directory:
-1. Install Odyc CLI: `go install github.com/meldiron/odyc-cli@latest`
-2. Run the build script: `./assets.sh`
-3. Refresh your browser to see changes
+Great challenge for kids and adults alike.
 
 ## 🧠 Memory Training Benefits
 
@@ -122,9 +53,75 @@ Forest Hike helps improve:
 - **Responsive Controls**: Smooth keyboard navigation
 - **Forest Theme**: Immersive woodland atmosphere
 
+## 🛠️ Technical Details
+
+### Technologies
+
+- **[Odyc.js](https://odyc.dev/)** - Simple JavaScript game engine for pixel games
+- **[Odyc CLI](https://github.com/meldiron/odyc-cli)** - Asset management and sprite generation
+- **Vanilla JavaScript** - Core game logic and scene management
+
+### Project Structure
+
+```
+forest-hike/
+├── assets/           # Game sprites and assets
+├── scenes/           # Game scenes (menu, game, difficulty, etc.)
+├── screenshots/      # Game screenshots for documentation
+├── utils/           # Utility functions (map generation, etc.)
+├── assets.js        # Generated sprite assets
+├── assets.sh        # Asset build script
+└── index.html       # Main game file
+```
+
+### Asset Management
+
+The game uses Odyc CLI for sprite management:
+
+```bash
+# Install Odyc CLI
+go install github.com/meldiron/odyc-cli@latest
+
+# Generate assets
+odyc-cli sprites -a ./assets -o assets.js
+```
+
+## 🖼️ Screenshots
+
+| Menu | Difficulty Selection |
+|------|---------------------|
+| ![Menu](screenshots/menu.png) | ![Stats](screenshots/stats.png) |
+
+| Daylight Map | Night Navigation |
+|--------------|------------------|
+| ![Day Map](screenshots/map-day.png) | ![Night Map](screenshots/map-night.png) |
+
+| Easy maps | Hard maps |
+|--------------------|------------|
+| ![Checkpoint](screenshots/map-midgame.png) | ![Difficulty](screenshots/difficulty.png) |
+
+## 🚀 Getting Started
+
+### Playing Online
+Simply visit [https://forest-hike.appwrite.network/](https://forest-hike.appwrite.network/) to play for free in your browser.
+
+### Local Development
+
+1. Clone this repository
+2. Start HTTP server `npx http-server`
+3. Visit `http://localhost:8080`
+
+### Building Assets
+
+If you modify sprites in the `assets/` directory:
+
+1. Install Odyc CLI: `go install github.com/meldiron/odyc-cli@latest`
+2. Run the build script: `./assets.sh`
+3. Refresh your browser to see changes
+
 ## 📝 License
 
-This project is open source. Feel free to fork, modify, and share!
+This project is open source under the [MIT License](./LICENSE). Feel free to fork, modify, and share!
 
 ---
 
