@@ -137,12 +137,7 @@ function getCheckpointSprite(visible, step) {
         finishes++;
         localStorage.setItem(level.difficulty, `${finishes}`);
 
-        await scene.openMessage(
-          "<1>You finished one " +
-            level.difficulty +
-            " hike, good job!<1>\n\n\n<7>Press SPACE to go to play again.<7>",
-        );
-        openDifficultyScene();
+        openCelebrationScene(level.difficulty);
         return;
       }
 
